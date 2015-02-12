@@ -1,0 +1,91 @@
+---
+title: "Analyze transmission type influence on fuel efficiency"
+author: "Evgeny Kuznetsov"
+output:
+  html_document:
+    keep_md: yes
+---
+
+## Synopsis
+
+This is Regression Models Course Project. In this project, we analyze transmission type (AM) influence on fuel efficiency (MPG) 
+basing on mtcars dataset. 
+
+## Exploratory analyses
+
+```{r}
+data(mtcars) # load data
+
+t.test(mpg ~ am, data = mtcars) # perform t.test
+```
+
+We have highly different means in these two groups. See also appendix A for means' graph.
+
+## Regression analyses
+
+
+```{r}
+minimum_fit <- lm(mpg ~ am, data = mtcars) # calculate minimum model
+
+full_fit <- lm(mpg ~ . , data = mtcars) # calculate full model
+
+reduced_fit <- step(full_fit, trace = 0) # calculate reduced model
+
+AIC(minimum_fit, full_fit, reduced_fit) # calculate An Information Criterion
+```
+
+```{r echo=FALSE}
+# hidden block to not mess up text
+aic_val <- round(AIC(reduced_fit), 2)
+sqr_val <- round(100*summary(reduced_fit)$r.squared, 2)
+asqr_val <- round(100*summary(reduced_fit)$adj.r.squared, 2)
+res <- round((confint(reduced_fit)[4,2] + confint(reduced_fit)[4,1]) / 2, 2)
+int <- round((confint(reduced_fit)[4,2] - confint(reduced_fit)[4,1]) / 2, 2)
+```
+
+Our strategy is to use model with minimum on An Information Criterion. Reduced model has minimum on AIC - `r aic_val`. So, let's use this model.
+
+```{r}
+summary(reduced_fit)
+```
+
+Our residual diagnose for chosen model that it explains `r sqr_val`% of variance with an adjustment to `r asqr_val`%. See also appendix B for residuals plots.
+
+
+```{r}
+confint(reduced_fit) # take confidence interval
+```
+
+
+Our quantitive value for manual transimission improvement is `r res` ± `r int` with 95% confidence interval. 
+
+
+## Executive Summary
+
+After analyses we conclude the following:
+
+* manual transmission is better for MPG
+* manual transmission increase MPG by 2.94 ± 2.89 with 95% confidence interval
+
+
+\newpage
+
+## Appendix A
+
+```{r}
+boxplot(mpg ~ factor(am, labels = c("Automatic", "Manual")), data = mtcars, 
+  col = c("red", "blue"), main = "Overall means", xlab = "Transmission",
+  ylab = "Miles per Gallon") 
+points(mpg ~ factor(am, labels = c("Automatic", "Manual")), data = mtcars)
+legend("topleft", c("Automatic", "Manual"), lty = 1, col = c("red", "blue"))
+```
+
+\newpage
+
+## Appendix B
+
+```{r}
+par(mfrow = c(2, 2))
+plot(reduced_fit)
+```
+
